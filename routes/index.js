@@ -38,7 +38,7 @@ router.post('/login',
     try {
       console.log(req.user);
       if (!req.user) {
-        throw res.status(401).json({ loginError: 'login failed' });
+        throw res.status(401).json({ Error: 'login failed' });
       }
 
       const token = jwt.sign(req.user.id, process.env.JWT_SECRET_KEY);

@@ -11,6 +11,7 @@ exports.validateUser = async (req, res, next) => {
       first_meet_day: firstMeetDay,
       phone_number: phoneNumber
     } = req.body;
+    console.log(req.body);
 
     if (!id || !id.trim()) {
       return res.status(400).json({ validationError: regex.REQUIRED_ID });
@@ -44,11 +45,7 @@ exports.validateUser = async (req, res, next) => {
       return res.status(400).json({ validationError: regex.INVALID_PASSWORD });
     }
 
-    if (!regex.REGEX_DATE.test(firstMeetDay)) {
-      return res.status(400).json({ validationError: regex.INVALID_DATE });
-    }
-
-    if (phone_number || !regex.REGEX_PHONE_NUM.test(phoneNumber)) {
+    if (phoneNumber && !regex.REGEX_PHONE_NUM.test(phoneNumber)) {
       return res.status(400).json({ validationError: regex.INVALID_PHONE_NUM });
     }
 

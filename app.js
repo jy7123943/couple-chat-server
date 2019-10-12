@@ -3,9 +3,9 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const passport = require('passport');
-const session = require('express-session');
-const flash = require('connect-flash');
-const MongoDBStore = require('connect-mongodb-session')(session);
+// const session = require('express-session');
+// const flash = require('connect-flash');
+// const MongoDBStore = require('connect-mongodb-session')(session);
 
 require('dotenv').config();
 
@@ -28,35 +28,35 @@ db.once('open', function () {
   console.log('Couple Chat DB connected!!!');
 });
 
-const store = new MongoDBStore({
-  uri: process.env.MONGODB_ATLAS_URL,
-  collection: 'mySessions'
-});
+// const store = new MongoDBStore({
+//   uri: process.env.MONGODB_ATLAS_URL,
+//   collection: 'mySessions'
+// });
 
-store.on('error', function (error) {
-  console.error(error);
-});
+// store.on('error', function (error) {
+//   console.error(error);
+// });
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 
 app.use(logger('dev'));
-app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
-  secret: process.env.SESSION_SECRET_KEY,
-  store: store,
-  resave: true,
-  saveUninitialized: true,
-}));
+// app.use(session({
+//   secret: process.env.SESSION_SECRET_KEY,
+//   store: store,
+//   resave: true,
+//   saveUninitialized: true,
+// }));
 
-// require('./config/passport')(passport);
-// app.use(passport.initialize());
-// app.use(passport.session());
-app.use(flash());
+require('./config/passport')(passport);
+app.use(passport.initialize());
+app.use(passport.session());
+// app.use(flash());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
@@ -71,6 +71,7 @@ app.use(function(req, res, next) {
 // error handler
 app.use(function(err, req, res, next) {
   // set locals, only providing error in development
+  console.log(err);
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 

@@ -1,5 +1,5 @@
-exports.REGEX_ID = /^[A-za-z0-9]{6,12}/g;
-exports.REGEX_PASSWORD = /^.*(?=^.{8,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$/;
+exports.REGEX_ID = /^[A-za-z0-9]{6,12}$/;
+exports.REGEX_PASSWORD = /^.*(?=^.{6,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$/;
 exports.REGEX_NAME = /^[가-힣a-zA-Z]+$/;
 exports.REGEX_PHONE_NUM = /^((01[1|6|7|8|9])[1-9]+[0-9]{6,7})|(010[1-9][0-9]{7})$/;
 exports.REGEX_DATE = /^(19|20)\d{2}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[0-1])$/;
@@ -15,7 +15,6 @@ exports.INVALID_ID = 'Not a valid id';
 exports.INVALID_PASSWORD = 'Password required';
 exports.INVALID_NAME = 'Not a valid name';
 exports.INVALID_PHONE_NUM = 'Not a valid phone number';
-exports.INVALID_DATE = 'Not a valid date';
 
 exports.DUPLICATE_ID = 'A user already exists with this email';
 

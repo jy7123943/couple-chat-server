@@ -1,7 +1,7 @@
 exports.REGEX_ID = /^[A-za-z0-9]{6,12}$/;
 exports.REGEX_PASSWORD = /^.*(?=^.{6,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$/;
 exports.REGEX_NAME = /^[가-힣a-zA-Z]+$/;
-exports.REGEX_PHONE_NUM = /^((01[1|6|7|8|9])[1-9]+[0-9]{6,7})|(010[1-9][0-9]{7})$/;
+exports.REGEX_PHONE_NUM = /^(?:(010\d{4})|(01[1|6|7|8|9]\d{3,4}))(\d{4})$/;
 exports.REGEX_DATE = /^(19|20)\d{2}-(0[1-9]|1[012])-(0[1-9]|[12][0-9]|3[0-1])$/;
 
 exports.REQUIRED_ID = 'Id required';

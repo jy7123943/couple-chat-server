@@ -6,29 +6,38 @@ const userSocketList = {};
 module.exports = (io) => {
   io.on('connection', socket => {
     console.log('socket connected', socket.id);
-    socket.on('hello', () => {
-      console.log('hello!!')
-    });
 
     /** COUPLE CONNECT */
-    socket.on('requestConnect', async (userId, partnerId) => {
+    socket.on('requestConnection', async (userId, partnerId) => {
       userSocketList[userId] = socket;
+      console.log('requestConnection', userId, partnerId);
 
-      if (waitingList[userId]) {
-        if (waitingList[userId] !== partnerId) {
-          const partnerSocketId = userSocketList[partnerId].id;
+      try {
+        if (!waitingList[partnerId]) {
+          if (Object.values(waitingList).includes(userId)) {
+            return io.to(socket.id).emit('partnerNotMatched');
+          }
 
-          io.to(partnerSocketId.id).emit('partnerNotMatched');
+          waitingList[userId] = partnerId;
+          return io.to(socket.id).emit('waitingPartner');
+        }
+
+        if (waitingList[partnerId] !== userId) {
+          const partnerSocket = userSocketList[partnerId];
+
+          if (partnerSocket) {
+            io.to(partnerSocket.id).emit('partnerNotMatched');
+          }
+
           io.to(socket.id).emit('partnerNotMatched');
+
+          delete waitingList[userId];
+          delete waitingList[partnerId];
           return;
         }
 
-        // matched
         const partnerSocket = userSocketList[partnerId];
-
         const roomKey = userId + partnerId;
-        socket.join(roomKey);
-        partnerSocket.join(roomKey);
 
         delete waitingList[userId];
         delete waitingList[partnerId];
@@ -38,25 +47,35 @@ module.exports = (io) => {
           chats: []
         });
 
-        const partnerDbId = await User.findOne({ id: partnerId })._id;
-        const userDbId = await User.findOne({ id: userId })._id;
+        console.log('newRoom', newRoom);
 
         await User.findOneAndUpdate({ id: userId }, {
-          partner_id: partnerDbId,
           chatroom_id: newRoom._id
         });
 
         await User.findOneAndUpdate({ id: partnerId }, {
-          partner_id: userDbId,
           chatroom_id: newRoom._id
         });
 
-        return io.sockets.in(roomKey).emit('completeConnection', roomKey);
-      }
+        io.to(socket.id).emit('completeConnection', {
+          roomKey,
+          partnerId
+        });
 
-      // waiting partner
-      waitingList[partnerId] = userId;
-      return io.to(socket.id).emit('waitingPartner');
+        io.to(partnerSocket.id).emit('completeConnection', {
+          roomKey,
+          partnerId: userId
+        });
+      } catch (err) {
+        console.log(err);
+        next(err);
+      }
+    });
+
+    socket.on('cancelConnection', userId => {
+      delete userSocketList[userId];
+      delete waitingList[userId];
+      console.log('cancelConnection',waitingList, userId);
     });
   });
 };

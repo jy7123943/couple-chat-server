@@ -13,17 +13,43 @@ module.exports = (io) => {
       console.log('requestConnection', userId, partnerId);
 
       try {
-        if (!waitingList[partnerId]) {
+        const partnerDbInfo = await User.findOne({ id: partnerId });
+
+        if (!partnerDbInfo) {
+          return io.to(socket.id).emit('partnerNotMatched', {
+            failed: '상대방의 정보가 없습니다. 가입한 사용자들만 연결이 가능합니다'
+          });
+        }
+        const partnerDbId = partnerDbInfo._id.toString();
+        console.log(userId, partnerDbId);
+
+        if (partnerDbId === userId) {
+          delete userSocketList[userId];
+
+          return io.to(socket.id).emit('partnerNotMatched', {
+            failed: '본인 아이디는 연결 불가능합니다'
+          });
+        }
+
+        if (partnerDbInfo.partner_id) {
+          delete userSocketList[userId];
+
+          return io.to(socket.id).emit('partnerNotMatched', {
+            failed: '상대방이 이미 다른 사용자와 연결중입니다'
+          });
+        }
+
+        if (!waitingList[partnerDbId]) {
           if (Object.values(waitingList).includes(userId)) {
             return io.to(socket.id).emit('partnerNotMatched');
           }
 
-          waitingList[userId] = partnerId;
+          waitingList[userId] = partnerDbId;
           return io.to(socket.id).emit('waitingPartner');
         }
 
-        if (waitingList[partnerId] !== userId) {
-          const partnerSocket = userSocketList[partnerId];
+        if (waitingList[partnerDbId] !== userId) {
+          const partnerSocket = userSocketList[partnerDbId];
 
           if (partnerSocket) {
             io.to(partnerSocket.id).emit('partnerNotMatched');
@@ -32,15 +58,16 @@ module.exports = (io) => {
           io.to(socket.id).emit('partnerNotMatched');
 
           delete waitingList[userId];
-          delete waitingList[partnerId];
+          delete waitingList[partnerDbId];
           return;
         }
 
-        const partnerSocket = userSocketList[partnerId];
-        const roomKey = userId + partnerId;
+        const partnerSocket = userSocketList[partnerDbId];
+        const roomKey = userId + partnerDbId;
 
         delete waitingList[userId];
-        delete waitingList[partnerId];
+        delete waitingList[partnerDbId];
+        delete userSocketList[userId];
 
         const newRoom = await ChatRoom.create({
           id: roomKey,
@@ -49,17 +76,19 @@ module.exports = (io) => {
 
         console.log('newRoom', newRoom);
 
-        await User.findOneAndUpdate({ id: userId }, {
-          chatroom_id: newRoom._id
+        await User.findByIdAndUpdate(userId, {
+          chatroom_id: newRoom._id,
+          partner_id: partnerDbId
         });
 
-        await User.findOneAndUpdate({ id: partnerId }, {
-          chatroom_id: newRoom._id
+        await User.findByIdAndUpdate(partnerDbId, {
+          chatroom_id: newRoom._id,
+          partner_id: userId
         });
 
         io.to(socket.id).emit('completeConnection', {
           roomKey,
-          partnerId
+          partnerDbId
         });
 
         io.to(partnerSocket.id).emit('completeConnection', {

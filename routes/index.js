@@ -36,19 +36,18 @@ router.post('/login',
   passport.authenticate('local', { session: false }),
   async (req, res, next) => {
     try {
-      console.log(req.user);
       if (!req.user) {
         throw res.status(401).json({ Error: 'login failed' });
       }
 
       const token = jwt.sign(req.user.id, process.env.JWT_SECRET_KEY);
-      return res.json({ result: "ok", token, userId: req.user.id });
+      return res.json({ result: "ok", token, userId: req.user._id });
     } catch (err) {
       console.log(err);
     }
 });
 
-router.put('/profileUpload', (req, res, next) => { console.log(req.headers); next() }, passport.authenticate('jwt', { session: false }), upload.single('profile_image_url'), async (req, res, next) => {
+router.put('/profileUpload', passport.authenticate('jwt', { session: false }), upload.single('profile_image_url'), async (req, res, next) => {
   try {
     console.log(req.file.location);
     console.log(req.user);

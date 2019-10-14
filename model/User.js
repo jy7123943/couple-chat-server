@@ -49,6 +49,9 @@ const userSchema = new Schema({
   chatroom_id: {
     type: Schema.Types.ObjectId,
     ref: 'ChatRoom'
+  },
+  push_token: {
+    type: String
   }
 });
 

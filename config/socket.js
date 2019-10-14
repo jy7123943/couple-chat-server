@@ -106,5 +106,10 @@ module.exports = (io) => {
       delete waitingList[userId];
       console.log('cancelConnection',waitingList, userId);
     });
+    
+    /** CHATTING */
+    socket.on('startChatApp', (userId, roomKey) => {
+
+    });
   });
 };

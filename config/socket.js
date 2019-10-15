@@ -1,7 +1,9 @@
+const { Expo } = require('expo-server-sdk');
 const User = require('../model/User');
 const ChatRoom = require('../model/ChatRoom');
 const waitingList = {};
 const userSocketList = {};
+const expo = new Expo();
 
 module.exports = (io) => {
   io.on('connection', async (socket) => {
@@ -19,7 +21,7 @@ module.exports = (io) => {
         if (!userDbInfo) {
           delete userSocketList[userId];
           return io.to(socket.id).emit('partnerNotMatched', {
-            failed: '잘못된 요청입니다'
+            failed: 'unAuthorized'
           });
         }
 
@@ -74,7 +76,7 @@ module.exports = (io) => {
 
         delete waitingList[userId];
         delete waitingList[partnerId];
-        // delete userSocketList[userDbId];
+        delete userSocketList[userId];
 
         const newRoom = await ChatRoom.create({
           id: roomKey,
@@ -111,12 +113,47 @@ module.exports = (io) => {
     socket.on('cancelConnection', userId => {
       delete userSocketList[userId];
       delete waitingList[userId];
+      delete userSocketList[userId];
       console.log('cancelConnection',waitingList, userId);
     });
 
     /** CHATTING */
-    socket.on('startChatApp', (userId, roomKey) => {
+    socket.on('startChatApp', async (userId, roomKey) => {
+      userSocketList[userId] = socket;
+      socket.join(roomKey);
+    });
 
+    socket.on('sendMessage', async ({ roomKey, userId, text, time }) => {
+      try {
+        const user = await User.findOne({ id: userId })
+          .populate('partner_id')
+          .exec((err, user) => {
+            if (err) {
+              return console.log(err);
+            }
+
+            console.log(user.partner_id);
+            if (!userSocketList[user.partner_id.id]) {
+              // 상대방이 소켓 연결을 끊음 (즉, 앱을 나간 상태)
+            }
+          });
+
+        io.sockets.in(roomKey).emit('sendTextMessage', {
+          chat: newChat
+        });
+
+        const newChat = {
+          user_id: user._id,
+          created_at: time,
+          text
+        };
+
+        await ChatRoom.findByIdAndUpdate(roomKey, {
+          '$push': { 'chats': newChat }
+        });
+      } catch (err) {
+
+      }
     });
   });
 };

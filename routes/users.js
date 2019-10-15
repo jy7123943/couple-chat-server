@@ -3,7 +3,6 @@ const router = express.Router();
 const passport = require('passport');
 const User = require('../model/User');
 
-/* GET users listing. */
 router.put('/pushToken', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
   try {
     console.log(req.user);

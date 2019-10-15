@@ -125,35 +125,54 @@ module.exports = (io) => {
 
     socket.on('sendMessage', async ({ roomKey, userId, text, time }) => {
       try {
-        const user = await User.findOne({ id: userId })
-          .populate('partner_id')
-          .exec((err, user) => {
-            if (err) {
-              return console.log(err);
-            }
-
-            console.log(user.partner_id);
-            if (!userSocketList[user.partner_id.id]) {
-              // 상대방이 소켓 연결을 끊음 (즉, 앱을 나간 상태)
-            }
-          });
-
-        io.sockets.in(roomKey).emit('sendTextMessage', {
-          chat: newChat
-        });
-
         const newChat = {
           user_id: user._id,
           created_at: time,
           text
         };
 
+        io.sockets.in(roomKey).emit('sendTextMessage', {
+          chat: newChat
+        });
+
         await ChatRoom.findByIdAndUpdate(roomKey, {
           '$push': { 'chats': newChat }
         });
-      } catch (err) {
 
+        const user = await User.findOne({ id: userId })
+          .populate('partner_id')
+          .exec((err, user) => {
+            if (err) {
+              socket.emit('error');
+              return console.log(err);
+            }
+
+            console.log(user.partner_id);
+            if (!userSocketList[user.partner_id.id]) {
+              // 상대방이 소켓 연결을 끊음 (즉, 앱을 나간 상태)
+
+              const pushToken = user.partner_id.push_token;
+              if (!Expo.isExpoPushToken(pushToken)) {
+                console.log('pushToken is not valid');
+                throw new Error('invalid push token');
+              }
+
+              messages.push({
+                to: pushToken,
+                sound: 'default',
+                body: text
+              });
+            }
+          });
+      } catch (err) {
+        socket.emit('error');
       }
+    });
+
+    socket.on('disconnect', () => {
+      const socketIndex = userSocketList.findIndex(userSocket => userSocket === socket);
+
+      delete userSocketList[socketIndex];
     });
   });
 };

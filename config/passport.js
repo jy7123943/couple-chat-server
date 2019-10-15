@@ -20,7 +20,7 @@ module.exports = (passport) => {
     usernameField: 'id',
     passwordField: 'password'
   }, async (username, password, done) => {
-    console.log(username, password);
+    console.log('username, password',username, password);
     try {
       const user = await User.findOne({ id: username });
       console.log('유저',user);
@@ -50,7 +50,7 @@ module.exports = (passport) => {
   }, async (jwtPayload, cb) => {
     console.log('Payload',jwtPayload);
     try {
-      const user = await User.findById(jwtPayload);
+      const user = await User.findOne({ id: jwtPayload });
       if (user) {
         return cb(null, user);
       }

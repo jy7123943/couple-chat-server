@@ -22,7 +22,7 @@ app.set('port', port);
 
 const server = http.createServer(app);
 const io = require('socket.io').listen(server);
-onSocketEvent(io)
+onSocketEvent(io);
 
 /**
  * Listen on provided port, on all network interfaces.

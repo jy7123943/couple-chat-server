@@ -4,7 +4,7 @@ const waitingList = {};
 const userSocketList = {};
 
 module.exports = (io) => {
-  io.on('connection', socket => {
+  io.on('connection', async (socket) => {
     console.log('socket connected', socket.id);
 
     /** COUPLE CONNECT */
@@ -106,7 +106,7 @@ module.exports = (io) => {
       delete waitingList[userId];
       console.log('cancelConnection',waitingList, userId);
     });
-    
+
     /** CHATTING */
     socket.on('startChatApp', (userId, roomKey) => {
 

@@ -5,8 +5,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../model/User');
 const { upload } = require('./middleware/image_upload');
 const { validateUser } = require('./middleware/validation');
-// const onSocketEvent = require('../config/socket');
-// const { io } = require('../bin/www');
 
 router.post('/signUp', validateUser, async (req, res, next) => {
   try {
@@ -43,7 +41,7 @@ router.post('/login',
       }
 
       const token = jwt.sign(req.user.id, process.env.JWT_SECRET_KEY);
-      return res.json({ result: "ok", token, userId: req.user._id });
+      return res.json({ result: "ok", token, userId: req.user.id });
     } catch (err) {
       console.log(err);
     }
@@ -60,12 +58,6 @@ router.put('/profileUpload', passport.authenticate('jwt', { session: false }), u
     console.log(err);
     return res.json({ uploadError: 'failed' });
   }
-});
-
-router.put('/connect', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
-  onSocketEvent(io);
-
-  
 });
 
 module.exports = router;

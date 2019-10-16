@@ -2,6 +2,20 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 const User = require('../model/User');
+const ChatRoom = require('../model/ChatRoom');
+
+router.get('/', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
+  try {
+    const { _id: userId } = req.user;
+
+    const userProfile = await User.findById(userId).populate('partner_id, chatroom_id');
+
+    return res.status(200).json({ userProfile });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+});
 
 router.put('/pushToken', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
   try {

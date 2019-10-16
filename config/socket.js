@@ -87,12 +87,12 @@ module.exports = (io) => {
 
         await User.findByIdAndUpdate(userDbId, {
           chatroom_id: newRoom._id,
-          partner_id: partnerDbId
+          partner_id: partnerDbInfo._id
         });
 
         await User.findByIdAndUpdate(partnerDbId, {
           chatroom_id: newRoom._id,
-          partner_id: userDbId
+          partner_id: userDbInfo._id
         });
 
         io.to(socket.id).emit('completeConnection', {
@@ -118,61 +118,83 @@ module.exports = (io) => {
     });
 
     /** CHATTING */
-    socket.on('startChatApp', async (userId, roomKey) => {
+    socket.on('joinRoom', async (userId, roomKey) => {
+      console.log('join Room');
       userSocketList[userId] = socket;
       socket.join(roomKey);
     });
 
     socket.on('sendMessage', async ({ roomKey, userId, text, time }) => {
       try {
+        console.log('============');
+        socket.join(roomKey);
+        io.sockets.in(roomKey).emit('sendMessage', {
+          chat: { userId, text, time }
+        });
+        console.log('============');
+
+        const user = await User.findOne({ id: userId }).populate('partner_id');
+        console.log('USER: ', user);
+
+        console.log('user partnerid: ',user.partner_id.id);
+        
+        if (!userSocketList[user.partner_id.id]) {
+          const messages = [];
+
+          const pushToken = user.partner_id.push_token;
+          if (!Expo.isExpoPushToken(pushToken)) {
+            console.log('pushToken is not valid');
+            throw new Error('invalid push token');
+          }
+
+          messages.push({
+            to: pushToken,
+            sound: 'default',
+            body: text
+          });
+
+          let chunks = expo.chunkPushNotifications(messages);
+
+          let tickets = [];
+          (async () => {
+            for (let chunk of chunks) {
+              try {
+                let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+                console.log(ticketChunk);
+                tickets.push(...ticketChunk);
+              } catch (error) {
+                console.error(error);
+              }
+            }
+          })();
+        }
+
         const newChat = {
-          user_id: user._id,
+          user_db_id: user._id,
+          user_id: userId,
           created_at: time,
           text
         };
+        console.log('new chat: ',newChat)
 
-        io.sockets.in(roomKey).emit('sendTextMessage', {
-          chat: newChat
-        });
-
-        await ChatRoom.findByIdAndUpdate(roomKey, {
+        await ChatRoom.findByIdAndUpdate(user.chatroom_id, {
           '$push': { 'chats': newChat }
         });
-
-        const user = await User.findOne({ id: userId })
-          .populate('partner_id')
-          .exec((err, user) => {
-            if (err) {
-              socket.emit('error');
-              return console.log(err);
-            }
-
-            console.log(user.partner_id);
-            if (!userSocketList[user.partner_id.id]) {
-              // 상대방이 소켓 연결을 끊음 (즉, 앱을 나간 상태)
-
-              const pushToken = user.partner_id.push_token;
-              if (!Expo.isExpoPushToken(pushToken)) {
-                console.log('pushToken is not valid');
-                throw new Error('invalid push token');
-              }
-
-              messages.push({
-                to: pushToken,
-                sound: 'default',
-                body: text
-              });
-            }
-          });
       } catch (err) {
         socket.emit('error');
       }
     });
 
-    socket.on('disconnect', () => {
-      const socketIndex = userSocketList.findIndex(userSocket => userSocket === socket);
+    socket.on('leaveRoom', () => {
+      console.log('leaveRoom');
+      const socketIndex = Object.values(userSocketList).findIndex(userSocket => userSocket === socket);
 
       delete userSocketList[socketIndex];
+      delete waitingList[socketIndex];
+    });
+
+    socket.on('disconnect', () => {
+      console.log('disconnected');
     });
   });
 };

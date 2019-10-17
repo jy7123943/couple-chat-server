@@ -114,31 +114,31 @@ module.exports = (io) => {
       delete userSocketList[userId];
       delete waitingList[userId];
       delete userSocketList[userId];
-      console.log('cancelConnection',waitingList, userId);
+      console.log('cancelConnection');
     });
 
     /** CHATTING */
     socket.on('joinRoom', async (userId, roomKey) => {
       console.log('join Room');
-      userSocketList[userId] = socket;
       socket.join(roomKey);
+
+      console.log(socket.adapter.rooms[roomKey]);
+      console.log('room status when join',socket.adapter.rooms[roomKey]);
     });
 
     socket.on('sendMessage', async ({ roomKey, userId, text, time }) => {
       try {
-        console.log('============');
         socket.join(roomKey);
-        io.sockets.in(roomKey).emit('sendMessage', {
+        io.to(roomKey).emit('sendMessage', {
           chat: { userId, text, time }
         });
-        console.log('============');
 
         const user = await User.findOne({ id: userId }).populate('partner_id');
-        console.log('USER: ', user);
 
-        console.log('user partnerid: ',user.partner_id.id);
-        
-        if (!userSocketList[user.partner_id.id]) {
+        const userRoomLength = socket.adapter.rooms[roomKey].length;
+        console.log('ROOM LENGTH', userRoomLength)
+
+        if (userRoomLength < 2) {
           const messages = [];
 
           const pushToken = user.partner_id.push_token;
@@ -150,7 +150,20 @@ module.exports = (io) => {
           messages.push({
             to: pushToken,
             sound: 'default',
-            body: text
+            // title: 'couple chat app',
+            body: text,
+            android: {
+              // icon:
+              color: '#f7dfd3',
+              name: 'couple',
+              sound: true,
+              priority: 'max',
+              vibrate: true,
+              badge: true
+            },
+            value: {
+              badge: true
+            }
           });
 
           let chunks = expo.chunkPushNotifications(messages);
@@ -170,12 +183,10 @@ module.exports = (io) => {
         }
 
         const newChat = {
-          user_db_id: user._id,
-          user_id: userId,
+          user_id: user.id,
           created_at: time,
           text
         };
-        console.log('new chat: ',newChat)
 
         await ChatRoom.findByIdAndUpdate(user.chatroom_id, {
           '$push': { 'chats': newChat }
@@ -187,14 +198,17 @@ module.exports = (io) => {
 
     socket.on('leaveRoom', () => {
       console.log('leaveRoom');
-      const socketIndex = Object.values(userSocketList).findIndex(userSocket => userSocket === socket);
+      // const socketIndex = Object.values(userSocketList).findIndex(userSocket => userSocket.id.toString() === socket.id.toString());
 
-      delete userSocketList[socketIndex];
-      delete waitingList[socketIndex];
+      // delete userSocketList[socketIndex];
+      // delete waitingList[socketIndex];
     });
 
     socket.on('disconnect', () => {
       console.log('disconnected');
+      // const socketIndex = Object.values(userSocketList).findIndex(userSocket => userSocket.id.toString() === socket.id.toString());
+      // console.log(socketIndex, 'socketIndex');
+      console.log('room!!!',socket.adapter.rooms);
     });
   });
 };

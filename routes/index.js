@@ -8,7 +8,7 @@ const { validateUser } = require('./middleware/validation');
 
 router.post('/signUp', validateUser, async (req, res, next) => {
   try {
-    console.log('body: ', req.body);
+    // console.log('body: ', req.body);
 
     const newUser = new User(req.body);
     const error = newUser.validateSync();
@@ -50,7 +50,7 @@ router.post('/login',
 router.put('/profileUpload', passport.authenticate('jwt', { session: false }), upload.single('profile_image_url'), async (req, res, next) => {
   try {
     console.log(req.file.location);
-    console.log(req.user);
+    // console.log(req.user);
     await User.findByIdAndUpdate(req.user._id, { profile_image_url: req.file.location });
 
     return res.json({ result: 'ok' });

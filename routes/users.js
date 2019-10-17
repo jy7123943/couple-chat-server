@@ -8,8 +8,11 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
   try {
     const { _id: userId } = req.user;
 
-    const userProfile = await User.findById(userId).populate('partner_id, chatroom_id');
+    const userProfile = await User.findById(userId).populate('partner_id').populate('chatroom_id');
 
+    // console.log('TYPE!!!!',typeof userProfile.partner_id)
+
+    // console.log(userProfile);
     return res.status(200).json({ userProfile });
   } catch (err) {
     console.log(err);
@@ -19,9 +22,9 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
 
 router.put('/pushToken', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
   try {
-    console.log(req.user);
+    // console.log(req.user);
     const { pushToken } = req.body;
-    console.log(pushToken, 'pushtoken')
+    // console.log(pushToken, 'pushtoken')
     const { _id: userId } = req.user;
 
     await User.findByIdAndUpdate(userId, {

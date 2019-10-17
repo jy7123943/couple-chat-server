@@ -10,9 +10,6 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
 
     const userProfile = await User.findById(userId).populate('partner_id').populate('chatroom_id');
 
-    // console.log('TYPE!!!!',typeof userProfile.partner_id)
-
-    // console.log(userProfile);
     return res.status(200).json({ userProfile });
   } catch (err) {
     console.log(err);

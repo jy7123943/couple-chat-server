@@ -8,7 +8,6 @@ const expo = new Expo();
 module.exports = (io) => {
   io.on('connection', async (socket) => {
     console.log('socket connected', socket.id);
-
     /** COUPLE CONNECT */
     socket.on('requestConnection', async (userId, partnerId) => {
       userSocketList[userId] = socket;

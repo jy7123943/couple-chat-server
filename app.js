@@ -16,7 +16,10 @@ const mongoose = require('mongoose');
 mongoose.connect(process.env.MONGODB_ATLAS_URL, {
   useNewUrlParser: true,
   useFindAndModify: false,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
+  socketTimeoutMS: 45000,
+  keepAlive: true,
+  reconnectTries: 10
 });
 
 const db = mongoose.connection;

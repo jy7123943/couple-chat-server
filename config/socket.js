@@ -124,11 +124,10 @@ module.exports = (io) => {
       socket.join(roomKey);
       // socket.leave(socket.id);
 
-      const userRoomLength = socket.adapter.rooms[roomKey].length;
-      console.log('user Room length' ,)
-      if (userRoomLength > 1) {
-        socket.broadcast.to(roomKey).emit('partnerConnect');
-      }
+      // const userRoomLength = socket.adapter.rooms[roomKey].length;
+      // if (userRoomLength > 1) {
+      //   socket.broadcast.to(roomKey).emit('partnerConnect');
+      // }
 
       console.log(socket.adapter.rooms[roomKey]);
       console.log('room status when join',socket.adapter.rooms);
@@ -196,7 +195,7 @@ module.exports = (io) => {
 
     socket.on('leaveRoom', (roomKey) => {
       console.log('leaveRoom', roomKey);
-      socket.broadcast.to(roomKey).emit('partnerDisconnect');
+      // socket.broadcast.to(roomKey).emit('partnerDisconnect');
       socket.leave(roomKey);
       console.log('room status when leave',socket.adapter.rooms);
     });

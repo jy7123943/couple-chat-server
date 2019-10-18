@@ -117,12 +117,12 @@ module.exports = (io) => {
     });
 
     /** CHATTING */
-    socket.on('joinRoom', async (userId, roomKey) => {
-      console.log('join Room');
+    socket.on('joinRoom', (roomKey) => {
+      console.log('join Room', roomKey);
       socket.join(roomKey);
 
       console.log(socket.adapter.rooms[roomKey]);
-      console.log('room status when join',socket.adapter.rooms[roomKey]);
+      console.log('room status when join',socket.adapter.rooms);
     });
 
     socket.on('sendMessage', async ({ roomKey, userId, text, time }) => {
@@ -147,22 +147,12 @@ module.exports = (io) => {
           }
 
           messages.push({
-            to: pushToken,
-            sound: 'default',
-            // title: 'couple chat app',
-            body: text,
-            android: {
-              // icon:
-              color: '#f7dfd3',
-              name: 'couple',
-              sound: true,
-              priority: 'max',
-              vibrate: true,
-              badge: true
-            },
-            value: {
-              badge: true
-            }
+            'to': pushToken,
+            // 'title': 'couple chat app',
+            'priority': 'high',
+            'body': text,
+            'sound': 'default',
+            'channelId': 'chat-messages',
           });
 
           let chunks = expo.chunkPushNotifications(messages);
@@ -195,8 +185,11 @@ module.exports = (io) => {
       }
     });
 
-    socket.on('leaveRoom', () => {
-      console.log('leaveRoom');
+    socket.on('leaveRoom', (roomKey) => {
+      console.log('leaveRoom', roomKey);
+      socket.leave(roomKey);
+      console.log('room status when leave',socket.adapter.rooms);
+
       // const socketIndex = Object.values(userSocketList).findIndex(userSocket => userSocket.id.toString() === socket.id.toString());
 
       // delete userSocketList[socketIndex];

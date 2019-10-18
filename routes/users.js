@@ -8,7 +8,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
   try {
     const { _id: userId } = req.user;
 
-    const userProfile = await User.findById(userId).populate('partner_id').populate('chatroom_id');
+    const userProfile = await User.findById(userId).populate('partner_id');
 
     return res.status(200).json({ userProfile });
   } catch (err) {

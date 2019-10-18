@@ -70,6 +70,8 @@ module.exports = (io) => {
           return;
         }
 
+        console.log('waiting list: =====', waitingList);
+
         const partnerSocket = userSocketList[partnerId];
         const roomKey = userDbId.slice(0, 5) + partnerDbId.slice(0, 5);
 
@@ -120,6 +122,13 @@ module.exports = (io) => {
     socket.on('joinRoom', (roomKey) => {
       console.log('join Room', roomKey);
       socket.join(roomKey);
+      // socket.leave(socket.id);
+
+      const userRoomLength = socket.adapter.rooms[roomKey].length;
+      console.log('user Room length' ,)
+      if (userRoomLength > 1) {
+        socket.broadcast.to(roomKey).emit('partnerConnect');
+      }
 
       console.log(socket.adapter.rooms[roomKey]);
       console.log('room status when join',socket.adapter.rooms);
@@ -187,20 +196,18 @@ module.exports = (io) => {
 
     socket.on('leaveRoom', (roomKey) => {
       console.log('leaveRoom', roomKey);
+      socket.broadcast.to(roomKey).emit('partnerDisconnect');
       socket.leave(roomKey);
       console.log('room status when leave',socket.adapter.rooms);
-
-      // const socketIndex = Object.values(userSocketList).findIndex(userSocket => userSocket.id.toString() === socket.id.toString());
-
-      // delete userSocketList[socketIndex];
-      // delete waitingList[socketIndex];
     });
 
-    socket.on('disconnect', () => {
-      console.log('disconnected');
-      // const socketIndex = Object.values(userSocketList).findIndex(userSocket => userSocket.id.toString() === socket.id.toString());
-      // console.log(socketIndex, 'socketIndex');
+    socket.on('disconnect', (reason) => {
+      console.log('disconnected', socket.id, reason);
       console.log('room!!!',socket.adapter.rooms);
     });
+
+    socket.on('error', (err) => {
+      socket.emit('error', err);
+    })
   });
 };

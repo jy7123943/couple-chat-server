@@ -7,10 +7,48 @@ const language = require('@google-cloud/language');
 const client = new language.LanguageServiceClient();
 const textAnalysisSample = require('./textAnalysisSample.json');
 
+const sampleee = {
+  "balance": {
+    "partner": 92,
+    "perfectScore": 30,
+    "score": 13.142857142857142,
+    "user": 210,
+  },
+  "textAmount": {
+    "average": 275,
+    "perfectScore": 30,
+    "score": 30,
+    "userRoom": 302,
+  },
+  "negativeTexts": [
+    "아니",
+    "그러네",
+    "또안돼!",
+    "의미없다..",
+    "뭐하냥",
+  ],
+  "positiveTexts": [
+    "꿀잼",
+    "올 주연님~~~~",
+    "아. 근데",
+    "우와ㅓㅓ",
+    "옹",
+  ],
+  "sentiment": {
+    "perfectScore": 40,
+    "score": 20,
+  },
+  "totalScore": 63.14285714285714,
+};
+
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
   try {
     const chatRoom = await ChatRoom.findById(req.user.chatroom_id);
+    console.log(req.user, chatRoom);
 
+    if (!chatRoom) {
+      return res.json({ error: '채팅 기록이 없습니다.' });
+    }
     return res.json({ chats: chatRoom.chats });
   } catch (err) {
     console.log(err);
@@ -137,7 +175,7 @@ router.post('/analysis', passport.authenticate('jwt', { session: false }), async
     console.log('* positive: ', positiveTexts);
     console.log('* negative: ', negativeTexts);
     const finalReport = {
-      length: {
+      textAmount: {
         average,
         userRoom: userChatRoomTextsLength,
         score: totalTextLengthScore,

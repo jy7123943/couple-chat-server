@@ -5,6 +5,7 @@ const User = require('../model/User');
 const ChatRoom = require('../model/ChatRoom');
 const language = require('@google-cloud/language');
 const client = new language.LanguageServiceClient();
+const textAnalysisSample = require('./textAnalysisSample.json');
 
 router.get('/', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
   try {
@@ -17,7 +18,6 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
   }
 });
 
-
 router.post('/analysis', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
   try {
     const DAYS_AGO = 30;
@@ -25,6 +25,7 @@ router.post('/analysis', passport.authenticate('jwt', { session: false }), async
     const startDate = new Date(endDate - (3600000 * 24 * DAYS_AGO));
 
     console.log(startDate, endDate);
+    console.log(req.user.chatroom_id);
 
     const [ data ] = await ChatRoom.aggregate([
       {
@@ -38,11 +39,51 @@ router.post('/analysis', passport.authenticate('jwt', { session: false }), async
       }
     ]);
 
-    // console.log(data.chats);
+    if (!data) {
+      return res.status(400).json({ error: '해당 기간의 데이터가 충분하지 않습니다.' });
+    }
 
-    const extractedAllText = data.chats.map(chat => chat.text).join('. ');
+    const allData = await ChatRoom.aggregate([
+      {
+        $match: {
+          // _id: { $not: { $eq: req.user.chatroom_id }},
+          'chats.created_at': {
+            '$gt': startDate,
+            '$lt': endDate
+          }
+        }
+      }
+    ]);
 
-    // console.log(extractedAllText)
+    const extractOnlyTexts = (data) => {
+      return data.map(chat => {
+        const chatDate = new Date(chat.created_at);
+        if (chatDate > startDate && chatDate < endDate) {
+          return chat.text;
+        }
+        return '';
+      });
+    };
+
+    const otherChatRoomTextsLength = allData.map(chatroom => {
+      return extractOnlyTexts(chatroom.chats).join('').length;
+    });
+    console.log('다른 채팅방 텍스트 길이', otherChatRoomTextsLength);
+
+    const sum = otherChatRoomTextsLength.reduce((sum, num) => sum += num);
+    const average = sum / otherChatRoomTextsLength.length;
+    console.log('총개수: ', sum, '* 평균: ', average);
+
+    const extractedAllTexts = extractOnlyTexts(data.chats);
+    const userChatRoomTextsLength = extractedAllTexts.join('').length;
+    console.log('* 우리 채팅방 총 텍스트 길이: ', userChatRoomTextsLength);
+
+    const myRoomDeviation = userChatRoomTextsLength / average;
+    const deviation = otherChatRoomTextsLength.map(textLen => textLen / average).sort();
+    const userRanking = deviation.indexOf(myRoomDeviation) + 1;
+    const totalTextLengthScore = 30 * (userRanking / deviation.length);
+
+    console.log(`----- * 대화량 총점: ${totalTextLengthScore}/30`);
 
     const partnerTexts = [];
     const userTexts = data.chats.filter(chat => {
@@ -53,26 +94,74 @@ router.post('/analysis', passport.authenticate('jwt', { session: false }), async
       }
     });
 
-    const extractedUserText = userTexts.map(chat => chat.text).join('. ');
-    const extractedPartnerText = partnerTexts.map(chat => chat.text).join('. ');
+    const extractedUserText = extractOnlyTexts(userTexts).join('');
+    const extractedPartnerText = extractOnlyTexts(partnerTexts).join('');
+    console.log('* 내가 보낸 텍스트 길이: ', extractedUserText.length);
+    console.log('* 파트너가 보낸 텍스트 길이: ', extractedPartnerText.length);
+    const calculateTextBalance = (userLen, partnerLen) => {
+      const ratio = (userLen > partnerLen) ? partnerLen / userLen : userLen / partnerLen;
+      return 30 * ratio;
+    };
+    const totalBalanceScore = calculateTextBalance(extractedUserText.length, extractedPartnerText.length);
+    console.log(`----- * 대화 발란스 총점: ${totalBalanceScore}/30`);
 
-    console.log('총 텍스트: ', extractedAllText.length)
-    console.log('내가 보낸 텍스트: ', extractedUserText.length);
-    console.log('파트너가 보낸 텍스트: ', extractedPartnerText.length);
 
     const document = {
-      content: extractedAllText,
-      type: 'PLAIN_TEXT',
+      content: extractedAllTexts.join('. '),
+      type: 'PLAIN_TEXT'
+    };
+    console.log(document);
+
+    const result = textAnalysisSample;
+    // const [ result ] = await client.analyzeSentiment({ document });
+
+    const totalSentiment = result.documentSentiment.score;
+    console.log('전체 감정 점수: ', totalSentiment);
+    const totalSentimentScore = 20 + (totalSentiment * 20);
+    const totalScore = totalTextLengthScore + totalBalanceScore + totalSentimentScore;
+    console.log(`----- * 대화 감정 점수 총점: ${totalSentimentScore}/40`);
+    console.log(`----- * 전체 총점: ${totalScore}/100`);
+    const sortedSentences = result.sentences.sort((left, right) => right.sentiment.score - left.sentiment.score);
+    // console.log(sortedSentences);
+
+    const extractTexts = (words) => {
+      return words.map(content => {
+        const word = content.text.content;
+        return word[word.length - 1] === '.' ? word.slice(0, word.length - 1) : word;
+      });
     };
 
+    const positiveTexts = extractTexts(sortedSentences.slice(0, 5));
+    const negativeTexts = extractTexts(sortedSentences.slice(sortedSentences.length - 5, sortedSentences.length));
 
-    // Detects the sentiment of the document
+    console.log('* positive: ', positiveTexts);
+    console.log('* negative: ', negativeTexts);
+    const finalReport = {
+      length: {
+        average,
+        userRoom: userChatRoomTextsLength,
+        score: totalTextLengthScore,
+        perfectScore: 30
+      },
+      balance: {
+        user: extractedUserText.length,
+        partner: extractedPartnerText.length,
+        score: totalBalanceScore,
+        perfectScore: 30
+      },
+      sentiment: {
+        score: totalSentimentScore,
+        perfectScore: 40
+      },
+      totalScore,
+      positiveTexts,
+      negativeTexts
+    };
+    console.log(finalReport);
     /*
-    const [ result ] = await client.analyzeSentiment({ document });
     console.log(JSON.stringify(result, null, 5));
 
     console.log(result);
-    console.log(util.inspect(result, {showHidden: false, depth: null}));
 
     const sentiment = result.documentSentiment;
     console.log(`Document sentiment:`);
@@ -91,9 +180,10 @@ router.post('/analysis', passport.authenticate('jwt', { session: false }), async
       console.log(`  Magnitude: ${sentence.sentiment.magnitude}`);
     });
     */
-    res.json({ result: 'ok' });
+    res.json({ result: 'ok', analysis_report: finalReport });
   } catch (err) {
-    console.log('error: ',err);
+    console.log(err);
+    next(err);
   }
 });
 

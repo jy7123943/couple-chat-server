@@ -3,7 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const User = require('../model/User');
-const { upload } = require('./middleware/image_upload');
+const { upload, deleteImage } = require('./middleware/image_upload');
 const { validateUser } = require('./middleware/validation');
 
 router.post('/signUp', validateUser, async (req, res, next) => {
@@ -45,7 +45,7 @@ router.post('/login',
     }
 });
 
-router.put('/profileUpload', passport.authenticate('jwt', { session: false }), upload.single('profile_image_url'), async (req, res, next) => {
+router.post('/profileImage', passport.authenticate('jwt', { session: false }), upload.single('profile_image_url'), async (req, res, next) => {
   try {
     console.log(req.file.location);
     await User.findByIdAndUpdate(req.user._id, { profile_image_url: req.file.location });
@@ -55,6 +55,38 @@ router.put('/profileUpload', passport.authenticate('jwt', { session: false }), u
     console.log(err);
     return res.json({ uploadError: 'failed' });
   }
+});
+
+router.put('/profileImage',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res, next) => {
+    const { profile_image_url: profileImageUrl } = req.user;
+    console.log(profileImageUrl)
+
+    if (profileImageUrl) {
+      const index = profileImageUrl.indexOf('com/');
+      const key = profileImageUrl.slice(index + 4);
+
+      console.log(key);
+      return deleteImage(key, next);
+    }
+
+    next();
+  },
+  upload.single('profile_image_url'),
+  async (req, res, next) => {
+    try {
+      console.log(req.file.location);
+      await User.findByIdAndUpdate(req.user._id, { profile_image_url: req.file.location });
+
+      return res.json({
+        result: 'ok',
+        profileImageUrl: req.file.location
+      });
+    } catch (err) {
+      console.log(err);
+      return res.json({ uploadError: 'failed' });
+    }
 });
 
 module.exports = router;

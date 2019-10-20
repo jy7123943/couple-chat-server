@@ -33,3 +33,15 @@ exports.upload = multer({
   }),
   limits: { fileSize: 5 * 1024 * 1024 }
 });
+
+exports.deleteImage = (key, next) => {
+  s3.deleteObject({
+    Bucket: 'couple-chat',
+    Key: key
+  }, (err) => {
+    if (err) {
+      return next(err);
+    }
+    next();
+  });
+}

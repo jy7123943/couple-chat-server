@@ -12,7 +12,7 @@ const sampleee = {
     "partner": 92,
     "perfectScore": 30,
     "score": 13.142857142857142,
-    "user": 210,
+    "user": 210
   },
   "textAmount": {
     "average": 275,

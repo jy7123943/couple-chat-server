@@ -3,6 +3,7 @@ const router = express.Router();
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const User = require('../model/User');
+const ChatRoom = require('../model/ChatRoom');
 const { upload, deleteImage } = require('./middleware/image_upload');
 const { validateUser } = require('./middleware/validation');
 
@@ -39,7 +40,27 @@ router.post('/login',
       }
 
       const token = jwt.sign(req.user.id, process.env.JWT_SECRET_KEY);
-      return res.json({ result: "ok", token, userId: req.user.id });
+
+      if (req.user.chatroom_id) {
+        const room = await ChatRoom.findById(req.user.chatroom_id);
+        const partner = await User.findById(req.user.partner_id);
+        const roomInfo = {
+          roomKey: room.id,
+          partnerId: partner.id
+        };
+
+        return res.json({
+          result: "ok",
+          token,
+          userId: req.user.id,
+          roomInfo
+        });
+      }
+      return res.json({
+        result: "ok",
+        token,
+        userId: req.user.id
+      });
     } catch (err) {
       console.log(err);
     }

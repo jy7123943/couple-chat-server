@@ -17,6 +17,25 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
   }
 });
 
+router.get('/roomInfo', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).populate('partner_id');
+
+    if (user.chatroom_id) {
+      const room = await ChatRoom.findById(user.chatroom_id);
+      const roomInfo = {
+        roomKey: room.id,
+        partnerId: user.partner_id.id
+      };
+      return res.json({ result: 'ok', roomInfo });
+    }
+    return res.json({ result: 'not found' });
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+});
+
 router.put('/pushToken', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
   try {
     // console.log(req.user);

@@ -48,7 +48,6 @@ module.exports = (passport) => {
     jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.JWT_SECRET_KEY
   }, async (jwtPayload, cb) => {
-    console.log('Payload',jwtPayload);
     try {
       const user = await User.findOne({ id: jwtPayload });
       if (user) {

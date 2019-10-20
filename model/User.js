@@ -31,7 +31,7 @@ const userSchema = new Schema({
     required: [true, regex.REQUIRED_FIRST_MEET_DAY]
   },
   phone_number: {
-    type: Number,
+    type: String,
     match: [regex.REGEX_PHONE_NUM, regex.INVALID_PHONE_NUM]
   },
   profile_image_url: {

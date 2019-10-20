@@ -193,7 +193,9 @@ router.post('/analysis', passport.authenticate('jwt', { session: false }), async
       },
       totalScore,
       positiveTexts,
-      negativeTexts
+      negativeTexts,
+      startDate,
+      endDate
     };
     console.log(finalReport);
     /*

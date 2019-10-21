@@ -150,8 +150,10 @@ router.post('/analysis', passport.authenticate('jwt', { session: false }), async
     };
     console.log(document);
 
-    const result = textAnalysisSample;
-    // const [ result ] = await client.analyzeSentiment({ document });
+    // const result = textAnalysisSample;
+    const [ result ] = await client.analyzeSentiment({ document });
+    console.log('=========== RESERT ===========');
+    console.log(result);
 
     const totalSentiment = result.documentSentiment.score;
     console.log('전체 감정 점수: ', totalSentiment);

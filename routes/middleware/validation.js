@@ -65,3 +65,34 @@ exports.validateUser = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.validateProfile = (req, res, next) => {
+  try {
+    const {
+      name,
+      phone_number: phoneNumber,
+      personal_message: personalMessage
+    } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ validationError: regex.REQUIRED_NAME });
+    }
+
+    if (name.trim().length < regex.MIN_NAME_LENGTH || name.trim().length > regex.MAX_NAME_LENGTH) {
+      return res.status(400).json({ validationError: regex.INVALID_NAME_LENGTH });
+    }
+
+    if (phoneNumber && !regex.REGEX_PHONE_NUM.test(phoneNumber)) {
+      return res.status(400).json({ validationError: regex.INVALID_PHONE_NUM });
+    }
+
+    if (personalMessage && personalMessage.trim().length > regex.MAX_PERSONAL_MESSAGE_LENGTH) {
+      return res.status(400).json({ validationError: regex.INVALID_PERSONAL_MESSAGE_LENGTH });
+    }
+
+    next();
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+};

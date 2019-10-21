@@ -21,5 +21,9 @@ exports.DUPLICATE_ID = 'A user already exists with this email';
 exports.MIN_NAME_LENGTH = 1;
 exports.MAX_NAME_LENGTH = 10;
 
+exports.MAX_PERSONAL_MESSAGE_LENGTH = 50;
+
 exports.INVALID_NAME_LENGTH = 'Name should be between 1 and 10 characters long';
 exports.INVALID_IMAGE_TYPE = 'Invalid image type, only jpg, jpeg, png files can be uploaded'
+
+exports.INVALID_PERSONAL_MESSAGE_LENGTH = 'Name should be between 0 and 50 characters long';

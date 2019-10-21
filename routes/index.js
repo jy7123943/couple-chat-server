@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../model/User');
 const ChatRoom = require('../model/ChatRoom');
 const { upload, deleteImage } = require('./middleware/image_upload');
-const { validateUser } = require('./middleware/validation');
+const { validateUser, validateProfile } = require('./middleware/validation');
 
 router.post('/signUp', validateUser, async (req, res, next) => {
   try {
@@ -108,6 +108,29 @@ router.put('/profileImage',
       console.log(err);
       return res.json({ uploadError: 'failed' });
     }
+});
+
+router.put('/profile', passport.authenticate('jwt', { session: false }), validateProfile, async (req, res, next) => {
+  try {
+    const { _id: userId } = req.user;
+    console.log(req.body);
+
+    await User.findByIdAndUpdate(userId, req.body);
+
+    return res.json({ result: 'ok' });
+  } catch (err) {
+    if (err && err.name === 'ValidationError') {
+      const errorObj = err.errors.personal_message
+        || err.errors.name
+        || err.errors.phone_number;
+
+      const errorMessage = errorObj ? errorObj.message : 'some field is not valid';
+
+      return res.status(400).json({ validationError: errorMessage });
+    }
+
+    return res.json({ uploadError: 'failed '});
+  }
 });
 
 module.exports = router;

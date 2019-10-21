@@ -17,7 +17,7 @@ router.get('/', passport.authenticate('jwt', { session: false }), async (req, re
   }
 });
 
-router.get('/roomInfo', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
+router.get('/room', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).populate('partner_id');
 

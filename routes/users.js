@@ -46,6 +46,7 @@ router.put('/pushToken',
     try {
       const { pushToken } = req.body;
       const { _id: userId } = req.user;
+      console.log(pushToken);
 
       await User.findByIdAndUpdate(userId, {
         push_token: pushToken

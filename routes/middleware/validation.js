@@ -11,7 +11,6 @@ exports.validateUser = async (req, res, next) => {
       first_meet_day: firstMeetDay,
       phone_number: phoneNumber
     } = req.body;
-    console.log(req.body);
 
     if (!id || !id.trim()) {
       return res.status(400).json({ validationError: regex.REQUIRED_ID });

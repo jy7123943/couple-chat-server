@@ -29,19 +29,22 @@ router.post('/signUp',
       await newUser.save();
       res.json({ result: 'ok' });
     } catch (err) {
+      console.error(err);
       next(err);
     }
 });
 
 router.post('/login',
   passport.authenticate('local', { session: false }),
-  async (req, res) => {
+  async (req, res, next) => {
     try {
-      if (!req.user) {
-        throw res.status(401).json({ Error: 'login failed' });
-      }
-
       const token = jwt.sign(req.user.id, process.env.JWT_SECRET_KEY);
+
+      const response = {
+        result: "ok",
+        userId: req.user.id,
+        token
+      };
 
       if (req.user.chatroom_id) {
         const room = await ChatRoom.findById(req.user.chatroom_id);
@@ -51,20 +54,13 @@ router.post('/login',
           partnerId: partner.id
         };
 
-        return res.json({
-          result: "ok",
-          token,
-          userId: req.user.id,
-          roomInfo
-        });
+        response.roomInfo = roomInfo;
       }
-      return res.json({
-        result: "ok",
-        token,
-        userId: req.user.id
-      });
+
+      return res.json(response);
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      next(err);
     }
 });
 
@@ -73,12 +69,11 @@ router.post('/profileImage',
   upload.single('profile_image_url'),
   async (req, res) => {
     try {
-      console.log(req.file.location);
       await User.findByIdAndUpdate(req.user._id, { profile_image_url: req.file.location });
 
       return res.json({ result: 'ok' });
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return res.json({ uploadError: 'failed' });
     }
 });
@@ -92,7 +87,6 @@ router.put('/profileImage',
       const index = profileImageUrl.indexOf('com/');
       const key = profileImageUrl.slice(index + 4);
 
-      console.log(key);
       return deleteImage(key, next);
     }
     next();
@@ -100,14 +94,16 @@ router.put('/profileImage',
   upload.single('profile_image_url'),
   async (req, res) => {
     try {
-      await User.findByIdAndUpdate(req.user._id, { profile_image_url: req.file.location });
+      await User.findByIdAndUpdate(req.user._id, {
+        profile_image_url: req.file.location
+      });
 
       return res.json({
         result: 'ok',
         profileImageUrl: req.file.location
       });
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return res.json({ uploadError: 'failed' });
     }
 });

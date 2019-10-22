@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-    "dev": "set NODE_ENV=development&&nodemon ./bin/www"
+    "dev": "set NODE_ENV=development&&nodemon ./bin/www",
+    "test": "mocha spec"
   },
   "dependencies": {
     "@google-cloud/language": "^3.5.0",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^6.2.2",
-    "nodemon": "^1.19.4"
+    "nodemon": "^1.19.4",
+    "supertest": "^4.0.2"
   }
 }

@@ -6,16 +6,6 @@ const ExtractJWT = passportJWT.ExtractJwt;
 const User = require('../model/User');
 
 module.exports = (passport) => {
-  passport.serializeUser((user, done) => {
-    done(null, user._id);
-  });
-
-  passport.deserializeUser((id, done) => {
-    User.findById(id, function(err, user) {
-      done(err, user);
-    });
-  });
-
   passport.use(new LocalStrategy({
     usernameField: 'id',
     passwordField: 'password'
@@ -24,14 +14,19 @@ module.exports = (passport) => {
       const user = await User.findOne({ id: username });
 
       let isValidPassword;
-      try {
-        isValidPassword = await bcrypt.compare(password, user.password);
-      } catch (err) {
-        console.log(err);
+
+      if (!user) {
         return done(null, false);
       }
 
-      if (!user || !isValidPassword) {
+      try {
+        isValidPassword = await bcrypt.compare(password, user.password);
+      } catch (err) {
+        console.error(err);
+        return done(null, false);
+      }
+
+      if (!isValidPassword) {
         return done(null, false);
       }
 
@@ -44,15 +39,15 @@ module.exports = (passport) => {
   passport.use(new JWTStrategy({
     jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
     secretOrKey: process.env.JWT_SECRET_KEY
-  }, async (jwtPayload, cb) => {
+  }, async (jwtPayload, done) => {
     try {
       const user = await User.findOne({ id: jwtPayload });
       if (user) {
-        return cb(null, user);
+        return done(null, user);
       }
     } catch (err) {
-      console.log(err);
-      return cb(err);
+      console.error(err);
+      return done(err);
     }
   }));
 };

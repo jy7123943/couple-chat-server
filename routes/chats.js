@@ -11,7 +11,6 @@ router.get('/',
   async (req, res, next) => {
     try {
       const chatRoom = await ChatRoom.findById(req.user.chatroom_id);
-      console.log(req.user, chatRoom);
 
       if (!chatRoom) {
         return res.json({ error: '채팅 기록이 없습니다.' });

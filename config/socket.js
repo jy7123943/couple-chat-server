@@ -32,7 +32,6 @@ module.exports = (io) => {
 
         const userDbId = userDbInfo._id.toString();
         const partnerDbId = partnerDbInfo._id.toString();
-        console.log(userDbId, partnerDbId);
 
         if (partnerDbId === userDbId) {
           return io.to(socket.id).emit('partnerNotMatched', {
@@ -41,7 +40,6 @@ module.exports = (io) => {
         }
 
         if (partnerDbInfo.partner_id) {
-          console.log(partnerDbInfo.partner_id, '다른 사용자')
           return io.to(socket.id).emit('partnerNotMatched', {
             failed: '상대방이 이미 다른 사용자와 연결중입니다'
           });
@@ -70,8 +68,6 @@ module.exports = (io) => {
           return;
         }
 
-        console.log('waiting list: =====', waitingList);
-
         const partnerSocket = userSocketList[partnerId];
         const roomKey = userDbId.slice(0, 5) + partnerDbId.slice(0, 5);
 
@@ -83,8 +79,6 @@ module.exports = (io) => {
           id: roomKey,
           chats: []
         });
-
-        console.log('newRoom', newRoom);
 
         await User.findByIdAndUpdate(userDbId, {
           chatroom_id: newRoom._id,
@@ -122,15 +116,8 @@ module.exports = (io) => {
     socket.on('joinRoom', (roomKey) => {
       console.log('join Room', roomKey);
       socket.join(roomKey);
-      // socket.leave(socket.id);
-
-      // const userRoomLength = socket.adapter.rooms[roomKey].length;
-      // if (userRoomLength > 1) {
-      //   socket.broadcast.to(roomKey).emit('partnerConnect');
-      // }
 
       console.log(socket.adapter.rooms[roomKey]);
-      console.log('room status when join',socket.adapter.rooms);
     });
 
     socket.on('sendMessage', async ({ roomKey, userId, text, time }) => {
@@ -143,14 +130,12 @@ module.exports = (io) => {
         const user = await User.findOne({ id: userId }).populate('partner_id');
 
         const userRoomLength = socket.adapter.rooms[roomKey].length;
-        console.log('ROOM LENGTH', userRoomLength)
 
         if (userRoomLength < 2) {
           const messages = [];
 
           const pushToken = user.partner_id.push_token;
           if (!Expo.isExpoPushToken(pushToken)) {
-            console.log('pushToken is not valid');
             throw new Error('invalid push token');
           }
 
@@ -170,7 +155,6 @@ module.exports = (io) => {
             for (let chunk of chunks) {
               try {
                 let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-                console.log(ticketChunk);
                 tickets.push(...ticketChunk);
               } catch (error) {
                 console.error(error);
@@ -195,14 +179,11 @@ module.exports = (io) => {
 
     socket.on('leaveRoom', (roomKey) => {
       console.log('leaveRoom', roomKey);
-      // socket.broadcast.to(roomKey).emit('partnerDisconnect');
       socket.leave(roomKey);
-      console.log('room status when leave',socket.adapter.rooms);
     });
 
     socket.on('disconnect', (reason) => {
       console.log('disconnected', socket.id, reason);
-      console.log('room!!!',socket.adapter.rooms);
     });
 
     socket.on('error', (err) => {

@@ -20,21 +20,18 @@ module.exports = (passport) => {
     usernameField: 'id',
     passwordField: 'password'
   }, async (username, password, done) => {
-    console.log('username, password',username, password);
     try {
       const user = await User.findOne({ id: username });
-      console.log('유저',user);
+
       let isValidPassword;
       try {
         isValidPassword = await bcrypt.compare(password, user.password);
       } catch (err) {
-        console.log(isValidPassword);
         console.log(err);
         return done(null, false);
       }
 
       if (!user || !isValidPassword) {
-        console.log(user, isValidPassword);
         return done(null, false);
       }
 

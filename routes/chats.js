@@ -15,6 +15,7 @@ router.get('/',
       if (!chatRoom) {
         return res.json({ error: '채팅 기록이 없습니다.' });
       }
+
       return res.json({ chats: chatRoom.chats });
     } catch (err) {
       console.log(err);
@@ -29,9 +30,6 @@ router.post('/analysis',
       const DAYS_AGO = 30;
       const endDate = new Date();
       const startDate = new Date(endDate - (3600000 * 24 * DAYS_AGO));
-
-      console.log(startDate, endDate);
-      console.log(req.user.chatroom_id);
 
       const [ data ] = await ChatRoom.aggregate([
         {
@@ -52,7 +50,6 @@ router.post('/analysis',
       const allData = await ChatRoom.aggregate([
         {
           $match: {
-            // _id: { $not: { $eq: req.user.chatroom_id }},
             'chats.created_at': {
               '$gt': startDate,
               '$lt': endDate
@@ -84,9 +81,7 @@ router.post('/analysis',
       const myRoomDeviation = userChatRoomTextsLength / average;
       const deviation = otherChatRoomTextsLength.map(textLen => textLen / average).sort();
       const userRanking = deviation.indexOf(myRoomDeviation) + 1;
-      const totalTextLengthScore = 30 * (userRanking / deviation.length);
-
-      console.log(`----- * 대화량 총점: ${totalTextLengthScore}/30`);
+      const totalTextLengthScore = 20 * (userRanking / deviation.length);
 
       const partnerTexts = [];
       const userTexts = data.chats.filter(chat => {
@@ -102,12 +97,10 @@ router.post('/analysis',
 
       const calculateTextBalance = (userLen, partnerLen) => {
         const ratio = (userLen > partnerLen) ? partnerLen / userLen : userLen / partnerLen;
-        return 30 * ratio;
+        return 20 * ratio;
       };
 
       const totalBalanceScore = calculateTextBalance(extractedUserText.length, extractedPartnerText.length);
-      console.log(`----- * 대화 발란스 총점: ${totalBalanceScore}/30`);
-
 
       const document = {
         content: extractedAllTexts.join('. '),
@@ -115,15 +108,11 @@ router.post('/analysis',
       };
 
       const [ result ] = await client.analyzeSentiment({ document });
-      console.log('=========== RESERT ===========');
-      console.log(result);
 
       const totalSentiment = result.documentSentiment.score;
-      console.log('전체 감정 점수: ', totalSentiment);
-      const totalSentimentScore = 20 + (totalSentiment * 20);
+      const totalSentimentScore = 30 + (totalSentiment * 30);
       const totalScore = totalTextLengthScore + totalBalanceScore + totalSentimentScore;
-      console.log(`----- * 대화 감정 점수 총점: ${totalSentimentScore}/40`);
-      console.log(`----- * 전체 총점: ${totalScore}/100`);
+
       const sortedSentences = result.sentences.sort((left, right) => right.sentiment.score - left.sentiment.score);
 
       const extractTexts = (words) => {
@@ -133,25 +122,25 @@ router.post('/analysis',
         });
       };
 
-      const positiveTexts = extractTexts(sortedSentences.slice(0, 5));
-      const negativeTexts = extractTexts(sortedSentences.slice(sortedSentences.length - 5, sortedSentences.length));
+      const positiveTexts = extractTexts(sortedSentences.slice(0, 10));
+      const negativeTexts = extractTexts(sortedSentences.slice(sortedSentences.length - 10, sortedSentences.length)).reverse();
 
       const finalReport = {
         textAmount: {
           average,
           userRoom: userChatRoomTextsLength,
           score: totalTextLengthScore,
-          perfectScore: 30
+          perfectScore: 20
         },
         balance: {
           user: extractedUserText.length,
           partner: extractedPartnerText.length,
           score: totalBalanceScore,
-          perfectScore: 30
+          perfectScore: 20
         },
         sentiment: {
           score: totalSentimentScore,
-          perfectScore: 40
+          perfectScore: 60
         },
         totalScore,
         positiveTexts,

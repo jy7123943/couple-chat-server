@@ -33,6 +33,7 @@ router.get('/room',
         };
         return res.json({ result: 'ok', roomInfo });
       }
+
       return res.json({ result: 'not found' });
     } catch (err) {
       console.log(err);
@@ -46,7 +47,6 @@ router.put('/pushToken',
     try {
       const { pushToken } = req.body;
       const { _id: userId } = req.user;
-      console.log(pushToken);
 
       await User.findByIdAndUpdate(userId, {
         push_token: pushToken

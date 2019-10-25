@@ -2,8 +2,8 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/python:3.7.0-stretch-node-browsers
-    working_directory: ~/couple-chat-server
+      - image: circleci/node:10.16.3
+    working_directory: ~/coupleChat
     steps:
       - checkout
       - run:
@@ -13,9 +13,9 @@ jobs:
             curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.5/install.sh | bash
             source ~/.nvm/nvm.sh
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install v12
-            nvm alias default v12
-            nvm use v12
+            nvm install v10.16.3
+            nvm alias default v10.16.3
+            nvm use v10.16.3
             node -v
 
             echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
@@ -38,6 +38,7 @@ jobs:
       - run:
           name: Install awscli
           command: |
+            sudo apt install python-pip python-dev
             sudo pip install awsebcli --upgrade
       - run:
           name: Create AWS credentials manually
@@ -51,11 +52,7 @@ jobs:
       - run:
           name: Deploy to env
           command: |
-            if [ "${CIRCLE_BRANCH}" == "master" ]; then
-                eb deploy coupleChat
-            else
-                eb deploy coupleChat-development
-            fi
+            eb deploy Couplechat-env-1
 workflows:
   version: 2
   build-deploy:

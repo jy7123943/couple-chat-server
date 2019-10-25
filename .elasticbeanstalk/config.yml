@@ -1,8 +1,8 @@
 branch-defaults:
   master:
-    environment: coupleChat
+    environment: Couplechat-env-1
 environment-defaults:
-  sample:
+  Couplechat-env-1:
     branch: null
     repository: null
 global:

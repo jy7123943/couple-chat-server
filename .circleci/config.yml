@@ -25,6 +25,11 @@ jobs:
           command: |
             node -v
       - run:
+          name: Create google credential json file
+          command: |
+            touch ~/coupleChat.json
+            echo '${GOOGLE_APPLICATION_JSON}' > coupleChat.json
+      - run:
           name: Show Current Branch
           command: echo ${CIRCLE_BRANCH}
       - run:

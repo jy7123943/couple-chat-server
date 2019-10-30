@@ -28,7 +28,7 @@ jobs:
           name: Create google credential json file
           command: |
             touch ~/coupleChat/coupleChat.json
-            echo '${GOOGLE_APPLICATION_JSON}' > ~/coupleChat/coupleChat.json
+            echo "${GOOGLE_APPLICATION_JSON}" > ~/coupleChat/coupleChat.json
       - run:
           name: Show Current Branch
           command: echo ${CIRCLE_BRANCH}

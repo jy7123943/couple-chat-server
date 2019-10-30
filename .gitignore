@@ -1,6 +1,5 @@
 node_modules/
 .env
-coupleChat-73b221b1e55e.json
 
 .elasticbeanstalk/*
 !.elasticbeanstalk/config.yml

@@ -25,17 +25,16 @@ jobs:
           command: |
             node -v
       - run:
-          name: Create google credential json file
-          command: |
-            touch ~/coupleChat/coupleChat.json
-            echo "${GOOGLE_APPLICATION_JSON}" > ~/coupleChat/coupleChat.json
-      - run:
           name: Show Current Branch
           command: echo ${CIRCLE_BRANCH}
       - run:
           name: Install NPM Dependencies
           command: |
             sudo npm install --unsafe-perm
+      - run:
+          name: Run test
+          command: |
+            npm test
       - run:
           name: Install awscli
           command: |

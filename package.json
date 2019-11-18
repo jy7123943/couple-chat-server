@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "echo \"${GOOGLE_APPLICATION_JSON}\" > /var/app/current/coupleChat.json&&node ./bin/www",
+    "start": "node ./bin/www",
     "dev": "set NODE_ENV=development&&nodemon ./bin/www",
     "test": "mocha spec --exit"
   },

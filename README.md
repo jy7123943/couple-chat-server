@@ -24,7 +24,7 @@
 
 ## Requirements
 - 안드로이드 기기 지원
-- 채팅 push 알림은 **Android 8+**이상인 디바이스만 지원
+- 채팅 push 알림은 Android 8+이상인 디바이스만 지원
 
 ## Prerequisites
 Couple Lab을 실행하기 위해서는 다음의 과정이 선행되어야 합니다.

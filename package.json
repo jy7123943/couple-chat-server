@@ -10,7 +10,7 @@
   "dependencies": {
     "@google-cloud/language": "^3.5.0",
     "@google-cloud/storage": "^4.0.0",
-    "aws-sdk": "^2.546.0",
+    "aws-sdk": "^2.814.0",
     "bcrypt": "^3.0.6",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
